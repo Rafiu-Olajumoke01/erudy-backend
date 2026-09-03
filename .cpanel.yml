@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/flyycuub/erudy.net/
+    - /bin/cp -R * $DEPLOYPATH
