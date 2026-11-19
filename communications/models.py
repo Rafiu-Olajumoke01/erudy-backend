@@ -8,6 +8,7 @@ class Announcement(models.Model):
         ('all', 'Everyone'),
         ('students', 'Students Only'),
         ('tutors', 'Tutors Only'),
+        ('parents', 'Parents Only'),
     ]
 
     school = models.ForeignKey(

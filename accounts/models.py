@@ -9,6 +9,9 @@ class User(AbstractUser):
         SCHOOL_ADMIN = 'school_admin', 'School Admin'
         TUTOR = 'tutor', 'Tutor'
         STUDENT = 'student', 'Student'
+        PARENT = 'parent', 'Parent'
+        BURSAR = 'bursar', 'Bursar'
+        REGISTRAR = 'registrar', 'Registrar'
 
     role = models.CharField(
         max_length=20,
