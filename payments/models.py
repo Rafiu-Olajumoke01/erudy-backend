@@ -123,3 +123,53 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.tx_ref} — {self.application.full_name} — {self.status}"
+
+class SubscriptionPayment(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        AWAITING_CONFIRMATION = "awaiting_confirmation", "Awaiting Confirmation"
+        PAID = "paid", "Paid"
+        FAILED = "failed", "Failed"
+
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name='subscription_payments',
+    )
+    plan = models.CharField(max_length=20, choices=School.SUBSCRIPTION_PLAN_CHOICES)
+
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    confirmed_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+
+    period_start = models.DateField()
+    period_end = models.DateField()
+
+    tx_ref = models.CharField(max_length=100, unique=True, editable=False)
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING)
+    method = models.CharField(max_length=30, default='bank_transfer')
+
+    payment_proof = models.ImageField(upload_to='subscription_proofs/', blank=True, null=True)
+
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='subscription_payments_reviewed',
+    )
+    reviewed_at = models.DateTimeField(blank=True, null=True)
+    paid_at = models.DateTimeField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.tx_ref:
+            self.tx_ref = f"SUB-{uuid.uuid4().hex[:12].upper()}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.tx_ref} — {self.school.name} — {self.status}"

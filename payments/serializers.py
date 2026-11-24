@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Payment, PromoCode
-
+from .models import Payment, PromoCode, SubscriptionPayment
 
 class PromoCodeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -110,3 +109,71 @@ class PaymentReviewSerializer(serializers.ModelSerializer):
             validated_data['reviewed_at'] = timezone.now()
 
         return super().update(instance, validated_data)
+
+
+class SubscriptionPaymentSerializer(serializers.ModelSerializer):
+    """Used by the Platform Owner to view and confirm school subscription payments."""
+
+    school_name = serializers.CharField(source='school.name', read_only=True)
+    reference = serializers.CharField(source='tx_ref', read_only=True)
+
+    class Meta:
+        model = SubscriptionPayment
+        fields = [
+            'id',
+            'school',
+            'school_name',
+            'plan',
+            'amount',
+            'confirmed_amount',
+            'period_start',
+            'period_end',
+            'reference',
+            'status',
+            'method',
+            'payment_proof',
+            'reviewed_by',
+            'reviewed_at',
+            'paid_at',
+            'created_at',
+        ]
+        read_only_fields = [
+            'id', 'school', 'school_name', 'plan', 'amount',
+            'period_start', 'period_end', 'reference', 'method',
+            'payment_proof', 'reviewed_by', 'reviewed_at', 'paid_at', 'created_at',
+        ]
+
+    def update(self, instance, validated_data):
+        request = self.context['request']
+        new_status = validated_data.get('status', instance.status)
+
+        if new_status != instance.status:
+            validated_data['reviewed_by'] = request.user
+            validated_data['reviewed_at'] = timezone.now()
+
+            if new_status == SubscriptionPayment.Status.PAID:
+                validated_data['paid_at'] = timezone.now()
+                validated_data.setdefault('confirmed_amount', instance.amount)
+
+        became_paid = (
+            new_status != instance.status
+            and new_status == SubscriptionPayment.Status.PAID
+        )
+        payment = super().update(instance, validated_data)
+
+        if became_paid:
+            school = payment.school
+            school.subscription_plan = payment.plan
+            school.subscription_status = 'active'
+            if (
+                not school.subscription_expires_at
+                or payment.period_end > school.subscription_expires_at
+            ):
+                school.subscription_expires_at = payment.period_end
+            school.save(update_fields=[
+                'subscription_plan',
+                'subscription_status',
+                'subscription_expires_at',
+            ])
+
+        return payment

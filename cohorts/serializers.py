@@ -20,6 +20,9 @@ class CourseSerializer(serializers.ModelSerializer):
 
 class CohortSerializer(serializers.ModelSerializer):
     student_count = serializers.IntegerField(read_only=True)
+    school_name = serializers.CharField(source='school.name', read_only=True)
+    course_name = serializers.CharField(source='course.name', read_only=True)
+    tutor_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Cohort
@@ -34,6 +37,9 @@ class CohortSerializer(serializers.ModelSerializer):
             'status',
             'is_active',
             'student_count',
+            'school_name',
+            'course_name',
+            'tutor_name',
             'created_at',
         ]
         read_only_fields = ['id', 'created_at']
@@ -54,3 +60,8 @@ class CohortSerializer(serializers.ModelSerializer):
                 {"course": "This course does not belong to the selected school."}
             )
         return data
+
+    def get_tutor_name(self, obj):
+        if not obj.tutor:
+            return None
+        return obj.tutor.get_full_name() or obj.tutor.username

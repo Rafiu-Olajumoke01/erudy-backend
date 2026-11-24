@@ -4,13 +4,20 @@ from accounts.models import User
 
 
 class AnnouncementSerializer(serializers.ModelSerializer):
+    school_name = serializers.CharField(source='school.name', read_only=True)
+    posted_by_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Announcement
         fields = [
-            'id', 'school', 'title', 'content', 'audience',
-            'posted_by', 'created_at',
+            'id', 'school', 'school_name', 'title', 'content', 'audience',
+            'posted_by', 'posted_by_name', 'created_at',
         ]
         read_only_fields = ['id', 'posted_by', 'created_at']
+
+    def get_posted_by_name(self, obj):
+        u = obj.posted_by
+        return (u.get_full_name() or u.email) if u else None
 
 
 class MessageSerializer(serializers.ModelSerializer):

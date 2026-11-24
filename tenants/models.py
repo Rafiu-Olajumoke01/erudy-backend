@@ -34,6 +34,8 @@ class School(models.Model):
         default='trial',
     )
 
+    subscription_expires_at = models.DateField(blank=True, null=True)
+
     is_active = models.BooleanField(default=True)
     date_onboarded = models.DateTimeField(auto_now_add=True)
 

@@ -22,9 +22,9 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.role == User.Role.PLATFORM_OWNER:
-            return Announcement.objects.all()
+            return Announcement.objects.select_related('school', 'posted_by')
 
-        qs = Announcement.objects.filter(school=user.school)
+        qs = Announcement.objects.select_related('school', 'posted_by').filter(school=user.school)
         if user.role == User.Role.STUDENT:
             return qs.filter(audience__in=['all', 'students'])
         if user.role == User.Role.TUTOR:
@@ -46,6 +46,13 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
             serializer.save(posted_by=user)
         else:
             serializer.save(school=user.school, posted_by=user)
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        if user.role == User.Role.PLATFORM_OWNER:
+            serializer.save()
+        else:
+            serializer.save(school=user.school)
 
 
 class MessageViewSet(viewsets.ModelViewSet):

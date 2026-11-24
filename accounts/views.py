@@ -33,6 +33,28 @@ class CreateTutorView(generics.CreateAPIView):
         serializer.save(role=User.Role.TUTOR, school=self.request.user.school)
 
 
+class MeView(APIView):
+    """Returns the logged-in user's basic details, so the frontend knows where to send them."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        school = user.school
+        return Response({
+            "id": user.id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "role": user.role,
+            "school": {
+                "id": school.id,
+                "name": school.name,
+                "slug": school.slug,
+            } if school else None,
+        })
+
+
 class UserListView(generics.ListAPIView):
     """List users — scoped to the requester's own school (except Platform Owner sees all)."""
     serializer_class = UserSerializer
