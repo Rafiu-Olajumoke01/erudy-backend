@@ -144,4 +144,4 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "erudy.net", "www.erudy.net"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "erudy.net", "www.erudy.net", "api.erudy.net"]
